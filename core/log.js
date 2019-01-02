@@ -5,7 +5,8 @@
   also print out everything send to debug.
 
 */
-
+var fs = require('fs');
+var path = require('path');
 var moment = require('moment');
 var fmt = require('util').format;
 var _ = require('lodash');
@@ -13,6 +14,38 @@ var util = require('./util');
 var config = util.getConfig();
 var debug = config.debug;
 var silent = config.silent;
+const BASEPATH = path.join(__dirname, '/../logs/');
+
+var Logger = function (fileId) {
+  this.fileName = `${fileId}.log`;
+
+  this.writing = false;
+  this.queue = [];
+
+  _.bindAll(this);
+}
+
+Logger.prototype.write = function(line) {
+  if(!this.writing) {
+    this.writing = true;
+    fs.appendFile(
+      BASEPATH + this.fileName,
+      line + '\n',
+      this.handleWriteCallback
+    );
+  } else
+    this.queue.push(line);
+}
+
+Logger.prototype.handleWriteCallback = function(err) {
+  if(err)
+    console.error(`ERROR WRITING LOG FILE ${this.fileName}:`, err);
+
+  this.writing = false;
+
+  if(_.size(this.queue))
+    this.write(this.queue.shift())
+}
 
 var sendToParent = function() {
   var send = method => (...args) => {
@@ -35,6 +68,8 @@ var Log = function() {
     this.output = console;
   else if(this.env === 'child-process')
     this.output = sendToParent();
+  // 保存数据到本地
+  this.saver = new Logger(`${moment().format('YYYY-MM-DD\ HH:mm:ss')}-CMDL-${Date.now()}`)
 };
 
 Log.prototype = {
@@ -45,7 +80,7 @@ Log.prototype = {
     var message = moment().format('YYYY-MM-DD HH:mm:ss');
     message += ' (' + name + '):\t';
     message += fmt.apply(null, args);
-
+    this.saver.write(message);
     this.output[method](message);
   },
   error: function() {
@@ -66,7 +101,7 @@ Log.prototype = {
 
 if(debug)
   Log.prototype.debug = function() {
-    this._write('info', arguments, 'DEBUG');  
+    this._write('info', arguments, 'DEBUG');
   }
 else
   Log.prototype.debug = _.noop;

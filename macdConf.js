@@ -32,10 +32,27 @@ config.watch = {
 
 config.tradingAdvisor = {
   enabled: true,
-  method: 'MACD',
+  method: 'MyMACD',
   candleSize: 60 * 24,
-  historySize: 1,
+  historySize: 10,
 }
+
+// MyMACD settings:
+config.MyMACD = {
+  // EMA weight (α)
+  // the higher the weight, the more smooth (and delayed) the line
+  short: 20,
+  long: 10,
+  signal: 9,
+  // the difference between the EMAs (to act as triggers)
+  thresholds: {
+    down: -0.025,
+    up: 0.025,
+    // How many candle intervals should a trend persist
+    // before we consider it real?
+    persistence: 1
+  }
+};
 
 // MACD settings:
 config.MACD = {
