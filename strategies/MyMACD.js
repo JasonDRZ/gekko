@@ -40,6 +40,10 @@ method.update = function(candle) {
   console.info({...candle, start: candle.start.format('YYYY-MM-DD hh:mm:ss')})
 }
 
+/**** 常量部分 ****/
+// 增量幅度，百分比
+var MD_MAX = 0.1;
+
 // for debugging purposes: log the last calculated
 // EMAs and diff.
 method.log = function() {
@@ -53,23 +57,20 @@ method.log = function() {
   /**
    * 策略
    */
-  /**** 常量部分 ****/
-  // 增量幅度，百分比
-  var MD_MAX = 0.1;
-
   /**** 变量部分 ****/
   // 上一次的差距
   var diffA = this.diffA || 0;
-  // 当前的差距
-  var diffB = diff;
+  // 当前的差距，并更新为历史差距
+  var diffB = this.diffA = diff;
   // 上一次计算的差距之间的增量
   var matchDiffA = this.matchDiffA || 0;
-  // 当前差距之间的增量
-  var matchDiffB = (diffB - diffA).toFixed(digits);
+  // 当前差距与上一次差距之间的增量，并更新历史差距增量
+  var matchDiffB = this.matchDiffA = (diffB - diffA).toFixed(digits);
   // 上一次的增量方向 ["down" , "up", "hold"]，默认为「"hold"」
   var dirMatchDiffA = this.dirMatchDiffA || "hold";
   // 当前增量方向 ["down" , "up", "hold"]
   var dirMatchDiffB = matchDiffB < 0 ? "down" : "up";
+
 
 
 
